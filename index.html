@@ -1,0 +1,704 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#ffffff">
+<title>PEEPZ!</title>
+<style>
+:root{
+  --ink:#111321;
+  --muted:#9a9daa;
+  --line:#eceef3;
+  --soft:#f5f6f8;
+  --red:#ff4f68;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:#fff;color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+body{overflow-x:hidden}
+button,input,textarea{font:inherit}
+button{cursor:pointer}
+.app{
+  width:min(100%,430px);
+  min-height:100dvh;
+  margin:0 auto;
+  padding:calc(env(safe-area-inset-top) + 26px) 0 calc(env(safe-area-inset-bottom) + 28px);
+  overflow:hidden;
+  background:#fff;
+}
+.header{
+  height:76px;
+  padding:0 28px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+}
+.brand{
+  appearance:none;border:0;background:transparent;padding:0;
+  color:var(--ink);font-size:32px;font-weight:950;letter-spacing:-2px;
+}
+.brand .bang{color:#3668ff}
+.top-actions{display:flex;align-items:center;gap:12px}
+.round{
+  position:relative;width:48px;height:48px;border:0;border-radius:50%;
+  display:grid;place-items:center;background:#f1f2f4;color:#171927;
+}
+.round svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.archive-count{
+  position:absolute;right:-4px;bottom:-4px;min-width:22px;height:22px;padding:0 5px;border-radius:999px;
+  display:grid;place-items:center;background:var(--red);color:#fff;font-size:11px;font-weight:900;
+  border:2px solid white;
+}
+.stage-wrap{padding-top:34px}
+.stage{
+  position:relative;
+  height:310px;
+  overflow:visible;
+  touch-action:none;
+}
+.add-card{
+  position:absolute;left:22px;top:18px;
+  width:64px;height:246px;border:0;border-radius:22px;background:#fff;
+  box-shadow:0 16px 38px rgba(35,44,77,.11);
+  display:grid;place-items:center;color:#b9bbc2;z-index:2;
+}
+.add-card span{font-size:38px;font-weight:300;line-height:1}
+.project-card,.next-card{
+  position:absolute;border:0;border-radius:26px;color:#fff;text-align:left;
+  box-shadow:0 18px 38px rgba(35,44,77,.16);
+}
+.project-card{
+  left:112px;top:18px;width:232px;height:246px;z-index:5;
+  padding:26px 24px 22px;
+  display:flex;flex-direction:column;
+  transform:translate3d(0,0,0);
+  transition:transform .22s ease,opacity .22s ease;
+  user-select:none;
+}
+.project-card.dragging{transition:none}
+.next-card{
+  left:368px;top:18px;width:232px;height:246px;z-index:1;
+  padding:26px 24px;opacity:.98;pointer-events:none;
+}
+.project-title{
+  margin:0;font-size:28px;line-height:1.02;font-weight:930;letter-spacing:-1.4px;
+}
+.project-author{font-size:12px;opacity:.83;margin-top:7px;font-weight:700}
+.project-pitch{font-size:14px;line-height:1.42;margin-top:22px;opacity:.96;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:5;overflow:hidden}
+.project-meta{
+  margin-top:auto;display:flex;justify-content:space-between;gap:12px;align-items:center;
+  font-size:11px;font-weight:800;opacity:.92
+}
+.project-pos{opacity:.75}
+.gesture-cue{
+  position:absolute;left:50%;transform:translateX(-50%);
+  z-index:15;border-radius:999px;padding:8px 12px;font-size:10px;font-weight:900;
+  opacity:0;pointer-events:none;transition:opacity .08s linear;
+}
+.gesture-cue.up{top:-6px;background:#f2f2f3;color:#444}
+.gesture-cue.down{bottom:12px;background:#111;color:#fff}
+.carousel-hint{
+  padding:0 28px;margin-top:2px;color:#b5b7bd;font-size:10px;font-weight:700;
+  text-align:center;letter-spacing:.25px;
+}
+.following{
+  margin:34px 0 0;
+  padding:0 28px;
+}
+.section-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px}
+.section-head h2{margin:0;font-size:19px;letter-spacing:-.5px}
+.section-head span{font-size:11px;color:#b3b5bd}
+.follow-list{display:grid;gap:10px}
+.follow-row{
+  min-height:64px;border:0;border-radius:18px;background:#f6f7f9;
+  display:grid;grid-template-columns:8px minmax(0,1fr) auto;gap:12px;align-items:center;
+  padding:10px 12px 10px 0;text-align:left;color:var(--ink)
+}
+.follow-color{align-self:stretch;border-radius:0 8px 8px 0}
+.follow-main{min-width:0}
+.follow-main strong{display:block;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.follow-main small{display:block;color:#9da0aa;font-size:10.5px;margin-top:4px}
+.follow-open{width:34px;height:34px;border:0;border-radius:50%;background:#fff;color:#777}
+.empty{
+  padding:22px 16px;border-radius:18px;background:#f7f8fa;color:#a1a4ad;text-align:center;font-size:12px;
+}
+.sheet-backdrop{
+  position:fixed;inset:0;background:rgba(19,23,35,.26);z-index:60;
+  display:none;align-items:flex-end;justify-content:center;
+}
+.sheet-backdrop.open{display:flex}
+.sheet{
+  width:min(100%,430px);max-height:86dvh;overflow:auto;background:#fff;
+  border-radius:30px 30px 0 0;padding:24px 22px max(28px,env(safe-area-inset-bottom));
+  box-shadow:0 -20px 55px rgba(20,28,56,.16)
+}
+.sheet-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.sheet-head h2{margin:0;font-size:23px;letter-spacing:-.8px}
+.close{width:38px;height:38px;border:0;border-radius:50%;background:#f2f3f5;font-size:20px;color:#555}
+.search-input,.input,.textarea{
+  width:100%;border:1px solid #e8e9ee;background:#f8f9fb;border-radius:16px;outline:none;padding:13px 14px;color:#171927;
+}
+.textarea{min-height:130px;resize:vertical}
+.field{display:grid;gap:6px;margin-bottom:11px}
+.field label{font-size:10px;color:#999ca6;font-weight:800;text-transform:uppercase;letter-spacing:.5px}
+.colors{display:flex;gap:9px;flex-wrap:wrap}
+.color-choice{
+  width:34px;height:34px;border-radius:50%;border:3px solid white;box-shadow:0 0 0 1px #e1e3e8;
+}
+.color-choice.active{box-shadow:0 0 0 2px #111}
+.primary{
+  width:100%;height:49px;border:0;border-radius:16px;background:#111;color:white;font-weight:900;margin-top:6px;
+}
+.result-list{display:grid;gap:9px;margin-top:14px}
+.result-row,.archive-row{
+  border:0;background:#f7f8fa;border-radius:16px;padding:13px;text-align:left;display:flex;justify-content:space-between;gap:12px;align-items:center;
+}
+.result-row strong,.archive-row strong{display:block}
+.result-row small,.archive-row small{display:block;color:#9a9da6;margin-top:4px;font-size:10px}
+.restore{border:0;border-radius:999px;padding:8px 11px;background:#fff;font-size:10px;font-weight:850;color:#555}
+.reader-backdrop{
+  position:fixed;inset:0;background:rgba(24,28,40,.26);z-index:70;display:none;padding:calc(env(safe-area-inset-top) + 54px) 22px calc(env(safe-area-inset-bottom) + 38px);
+}
+.reader-backdrop.open{display:flex;align-items:center;justify-content:center}
+.reader{
+  width:min(100%,390px);max-height:78dvh;border-radius:30px;color:#fff;position:relative;overflow:hidden;
+  box-shadow:0 28px 70px rgba(18,25,52,.28);transform:scale(.96);opacity:0;transition:.22s ease;
+}
+.reader-backdrop.open .reader{transform:scale(1);opacity:1}
+.reader-scroll{max-height:78dvh;overflow:auto;padding:34px 28px 30px}
+.reader h2{font-size:31px;line-height:1;margin:0;letter-spacing:-1.5px}
+.reader .author{font-size:12px;opacity:.78;margin-top:8px;font-weight:700}
+.reader p{font-size:15px;line-height:1.55;margin:24px 0 0}
+.reader-actions{display:flex;gap:9px;margin-top:24px}
+.reader-action{border:0;border-radius:999px;background:rgba(255,255,255,.94);padding:10px 14px;font-weight:850;color:#20212b}
+.toast{
+  position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(16px);opacity:0;
+  background:#111;color:white;padding:10px 14px;border-radius:999px;font-size:11px;font-weight:800;z-index:100;transition:.2s;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ===== Ajustements demandés ===== */
+:root{
+  --active-color:#3767f6;
+}
+
+.brand-block{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  gap:2px;
+}
+.brand-subtitle{
+  font-size:10px;
+  line-height:1.15;
+  color:#a5a8b0;
+  font-weight:700;
+  letter-spacing:.08px;
+  white-space:nowrap;
+}
+.brand .bang{
+  color:var(--active-color) !important;
+  transition:color .22s ease;
+}
+.archive-count{
+  background:var(--active-color) !important;
+  transition:background-color .22s ease;
+}
+.add-card span{
+  color:var(--active-color) !important;
+  transition:color .22s ease;
+}
+.add-card{
+  border:1px solid color-mix(in srgb, var(--active-color) 16%, #ffffff) !important;
+}
+.search-input:focus,.input:focus,.textarea:focus{
+  border-color:var(--active-color) !important;
+  box-shadow:0 0 0 3px color-mix(in srgb, var(--active-color) 12%, transparent);
+}
+
+/* Carte principale plus allongée */
+.stage{
+  height:382px !important;
+}
+.add-card{
+  top:18px !important;
+  height:304px !important;
+}
+.project-card{
+  top:18px !important;
+  height:304px !important;
+  padding:28px 24px 24px !important;
+}
+.next-card{
+  top:18px !important;
+  height:304px !important;
+}
+.project-pitch{
+  -webkit-line-clamp:7 !important;
+  line-height:1.46 !important;
+}
+
+/* La zone À suivre descend davantage vers le bas de l'écran */
+.following{
+  margin-top:72px !important;
+  padding-bottom:18px;
+}
+.follow-list .empty{
+  min-height:92px;
+  display:grid;
+  place-items:center;
+  padding:22px 28px;
+}
+
+/* Toute future pastille/notification placée dans À suivre
+   adoptera automatiquement la couleur de la carte courante. */
+.following .notification-badge,
+.following .badge,
+.following .notif{
+  background:var(--active-color) !important;
+  color:#fff !important;
+  transition:background-color .22s ease;
+}
+
+@media (max-height:760px){
+  .stage{height:354px !important}
+  .add-card,.project-card,.next-card{height:282px !important}
+  .following{margin-top:54px !important}
+}
+
+
+/* PEEPZ — resserrement vertical + compteur projets suivis */
+.stage-wrap{padding-top:14px !important}
+.stage{height:336px !important}
+.add-card,.project-card,.next-card{
+  top:8px !important;
+  height:294px !important;
+}
+.following{
+  margin-top:22px !important;
+}
+#followCount{
+  color:var(--active-color);
+  transition:color .22s ease;
+}
+#followLabel{
+  color:var(--ink);
+}
+@media (max-height:760px){
+  .stage-wrap{padding-top:8px !important}
+  .stage{height:314px !important}
+  .add-card,.project-card,.next-card{height:278px !important}
+  .following{margin-top:14px !important}
+}
+
+
+/* PEEPZ V4 — respirations verticales symétriques */
+.stage-wrap{
+  padding-top:18px !important;
+}
+.stage{
+  height:316px !important;
+}
+.add-card,.project-card,.next-card{
+  top:8px !important;
+  height:294px !important;
+}
+.following{
+  margin-top:18px !important;
+}
+@media (max-height:760px){
+  .stage-wrap{padding-top:14px !important}
+  .stage{height:300px !important}
+  .add-card,.project-card,.next-card{height:278px !important}
+  .following{margin-top:14px !important}
+}
+
+
+/* ===== PEEPZ — typographie renforcée / interface plus jeune ===== */
+.brand-subtitle{
+  font-size:12px !important;
+  line-height:1.2 !important;
+  font-weight:800 !important;
+  letter-spacing:.05px !important;
+  color:#8f939d !important;
+  margin-top:3px !important;
+}
+
+.project-title{
+  font-size:31px !important;
+  line-height:1 !important;
+  font-weight:950 !important;
+  letter-spacing:-1.5px !important;
+}
+.project-author{
+  font-size:13px !important;
+  font-weight:800 !important;
+  margin-top:8px !important;
+}
+.project-pitch{
+  font-size:15.5px !important;
+  line-height:1.46 !important;
+  font-weight:560 !important;
+}
+.project-meta{
+  font-size:12.5px !important;
+  font-weight:900 !important;
+  line-height:1.22 !important;
+}
+.project-pos{
+  font-size:12px !important;
+  font-weight:850 !important;
+}
+
+.section-head h2{
+  font-size:21px !important;
+  font-weight:950 !important;
+  letter-spacing:-.65px !important;
+}
+#followCount{
+  font-size:22px !important;
+  font-weight:950 !important;
+}
+#followLabel{
+  font-size:20px !important;
+  font-weight:900 !important;
+}
+.section-head > span{
+  font-size:11px !important;
+  font-weight:700 !important;
+}
+
+.follow-main strong{
+  font-size:15.5px !important;
+  font-weight:900 !important;
+}
+.follow-main small{
+  font-size:11.5px !important;
+  font-weight:700 !important;
+}
+.follow-row{
+  min-height:70px !important;
+}
+
+/* Flèche parfaitement centrée dans son cercle */
+.follow-open{
+  width:36px !important;
+  height:36px !important;
+  border-radius:50% !important;
+  display:grid !important;
+  place-items:center !important;
+  padding:0 !important;
+  line-height:1 !important;
+  font-size:22px !important;
+  font-weight:700 !important;
+  text-align:center !important;
+  transform:none !important;
+}
+
+/* Un peu plus de caractère sur les contrôles */
+.round{
+  width:50px !important;
+  height:50px !important;
+}
+.archive-count{
+  min-width:23px !important;
+  height:23px !important;
+  font-size:11.5px !important;
+  font-weight:950 !important;
+}
+.add-card span{
+  font-size:42px !important;
+  font-weight:420 !important;
+}
+.empty{
+  font-size:12.5px !important;
+  font-weight:650 !important;
+  line-height:1.45 !important;
+}
+
+
+/* PEEPZ — compteur de cartes remonté au niveau du titre */
+.project-title-row{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+}
+.project-title-row .project-title{
+  flex:1;
+  min-width:0;
+}
+.project-title-row .project-pos{
+  flex:none;
+  margin-top:3px;
+  font-size:12.5px !important;
+  font-weight:900 !important;
+  opacity:.8;
+  white-space:nowrap;
+}
+.project-meta{
+  display:block !important;
+}
+#projectStats{
+  display:block;
+  white-space:nowrap;
+}
+
+
+/* PEEPZ — statistiques légèrement réduites pour conserver la marge droite */
+.project-meta{
+  padding-right:12px !important;
+}
+#projectStats{
+  font-size:11px !important;
+  line-height:1.2 !important;
+  font-weight:850 !important;
+  white-space:nowrap !important;
+  max-width:100% !important;
+}
+
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="header">
+    <div class="brand-block">
+      <button class="brand" id="brandBtn">PEEPZ<span class="bang">!</span></button>
+      <div class="brand-subtitle">Tous les projets du Lycée Hôtelier</div>
+    </div>
+    <div class="top-actions">
+      <button class="round" id="archiveBtn" aria-label="Archives">
+        <svg viewBox="0 0 24 24"><path d="M4 7h16"></path><path d="M5.5 7v12h13V7"></path><path d="M8.5 11h7"></path><path d="M3.5 4h17v3h-17z"></path></svg>
+        <span class="archive-count" id="archiveCount">0</span>
+      </button>
+      <button class="round" id="searchBtn" aria-label="Rechercher">
+        <svg viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.4"></circle><path d="m16 16 4.2 4.2"></path></svg>
+      </button>
+    </div>
+  </header>
+
+  <div class="stage-wrap">
+    <div class="stage" id="stage">
+      <button class="add-card" id="addBtn" aria-label="Ajouter une idée"><span>+</span></button>
+      <div class="next-card" id="nextCard"></div>
+      <div class="gesture-cue up" id="cueUp">ARCHIVES ↑</div>
+      <div class="gesture-cue down" id="cueDown">À SUIVRE ↓</div>
+      <article class="project-card" id="projectCard">
+        <div class="project-title-row">
+          <h1 class="project-title" id="projectTitle"></h1>
+          <span class="project-pos" id="projectPos"></span>
+        </div>
+        <div class="project-author" id="projectAuthor"></div>
+        <div class="project-pitch" id="projectPitch"></div>
+        <div class="project-meta"><span id="projectStats"></span></div>
+      </article>
+    </div>
+  </div>
+
+  <section class="following">
+    <div class="section-head"><h2 id="followHeading"><span id="followCount">0</span> <span id="followLabel">projet suivi</span></h2><span>ordre alphabétique</span></div>
+    <div class="follow-list" id="followList"></div>
+  </section>
+</div>
+
+<div class="sheet-backdrop" id="archiveSheet">
+  <div class="sheet">
+    <div class="sheet-head"><h2>Archives</h2><button class="close" data-close="archiveSheet">×</button></div>
+    <div id="archiveList"></div>
+  </div>
+</div>
+
+<div class="sheet-backdrop" id="searchSheet">
+  <div class="sheet">
+    <div class="sheet-head"><h2>Rechercher</h2><button class="close" data-close="searchSheet">×</button></div>
+    <input class="search-input" id="searchInput" placeholder="Titre, porteur ou mot-clé">
+    <div class="result-list" id="searchResults"></div>
+  </div>
+</div>
+
+<div class="sheet-backdrop" id="addSheet">
+  <div class="sheet">
+    <div class="sheet-head"><h2>Ajoute ton idée</h2><button class="close" data-close="addSheet">×</button></div>
+    <div class="field"><label>Titre</label><input class="input" id="newTitle" placeholder="Nom du projet"></div>
+    <div class="field"><label>Porteur</label><input class="input" id="newAuthor" placeholder="Prénom / pseudo"></div>
+    <div class="field"><label>Projet</label><textarea class="textarea" id="newPitch" placeholder="Présente ton idée"></textarea></div>
+    <div class="field"><label>Couleur de la carte</label><div class="colors" id="colorChoices"></div></div>
+    <button class="primary" id="publishBtn">Publier le projet</button>
+  </div>
+</div>
+
+<div class="reader-backdrop" id="readerBackdrop">
+  <article class="reader" id="reader">
+    <div class="reader-scroll">
+      <h2 id="readerTitle"></h2>
+      <div class="author" id="readerAuthor"></div>
+      <p id="readerText"></p>
+      <div class="reader-actions"><button class="reader-action" id="readerComment">Commenter</button></div>
+    </div>
+  </article>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const palette=["#3767f6","#7a43f5","#ff8c36","#12a7a1","#f05688","#2f8a61"];
+let projects=[
+  {id:1,title:"NOVA",author:"Maya K.",pitch:"Une application qui transforme les trajets quotidiens en défis collectifs et fait émerger de nouvelles idées locales.",color:"#3767f6",interest:41,comments:8},
+  {id:2,title:"SPARK",author:"Noé R.",pitch:"Un espace ultra-simple pour partager une idée, trouver les personnes intéressées et constituer une première équipe.",color:"#7a43f5",interest:27,comments:4},
+  {id:3,title:"OFFLINE",author:"Lina S.",pitch:"Une proposition d’activité réelle chaque jour, seul ou à plusieurs, qui disparaît une fois la journée terminée.",color:"#ff8c36",interest:18,comments:2},
+  {id:4,title:"ATELIER",author:"Sam T.",pitch:"Une bourse aux compétences pour relier les projets du lycée aux personnes capables de les faire avancer.",color:"#12a7a1",interest:33,comments:6},
+  {id:5,title:"PASSERELLE",author:"Inès B.",pitch:"Mettre en relation les élèves qui ont une compétence avec ceux qui cherchent un coup de main pour concrétiser un projet.",color:"#f05688",interest:22,comments:3},
+  {id:6,title:"RETOUR À LA NORMALE",author:"Yann D.",pitch:"Un projet autour du retour à la normale, de ce que l’on considère comme habituel et de la manière dont nos usages peuvent évoluer.",color:"#3767f6",interest:36,comments:7},
+  {id:7,title:"LOCAL",author:"Adam P.",pitch:"Faire découvrir chaque semaine une initiative, une adresse ou un savoir-faire local choisi par les élèves.",color:"#2f8a61",interest:16,comments:2},
+  {id:8,title:"TABLE OUVERTE",author:"Zoé M.",pitch:"Créer des rencontres courtes autour d’une table pour faire circuler idées, projets et envies entre les différentes formations.",color:"#ff8c36",interest:29,comments:5},
+  {id:9,title:"MINUTE",author:"Léo G.",pitch:"Une idée, une minute : un format très court pour présenter un projet et permettre aux autres de dire immédiatement s’ils veulent le suivre.",color:"#7a43f5",interest:24,comments:3},
+  {id:10,title:"COULISSES",author:"Sarah V.",pitch:"Montrer les métiers, les gestes et les projets invisibles du lycée à travers de très courts contenus produits par les élèves.",color:"#12a7a1",interest:31,comments:6},
+  {id:11,title:"ÉCHANGE",author:"Tom A.",pitch:"Un espace de troc de services et de petits coups de main entre élèves et personnels, sans transaction financière.",color:"#f05688",interest:20,comments:4},
+  {id:12,title:"APRÈS",author:"Lou C.",pitch:"Permettre aux anciens élèves de partager une expérience, une opportunité ou un conseil concret avec ceux qui sont encore au lycée.",color:"#3767f6",interest:38,comments:9},
+  {id:13,title:"DÉCLIC",author:"Nina F.",pitch:"Chaque semaine, une proposition inattendue pour donner envie de tester une activité, rejoindre un atelier ou lancer sa propre idée.",color:"#ff8c36",interest:26,comments:4},
+  {id:14,title:"HORS CADRE",author:"Émile J.",pitch:"Un laboratoire de projets libres pour tester rapidement des idées qui ne trouvent pas encore leur place dans les dispositifs habituels.",color:"#2f8a61",interest:19,comments:2}
+];
+let current=0;
+let archived=new Set();
+let following=new Set();
+let drag={active:false,x:0,y:0,dx:0,dy:0};
+let chosenColor=palette[0];
+
+const $=s=>document.querySelector(s);
+const $$=s=>[...document.querySelectorAll(s)];
+
+function toast(t){const e=$("#toast");e.textContent=t;e.classList.add("show");clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove("show"),1500)}
+function available(){return projects.filter(p=>!archived.has(p.id)&&!following.has(p.id))}
+function currentProject(){
+  const a=available();
+  if(!a.length)return null;
+  current=((current%a.length)+a.length)%a.length;
+  return a[current];
+}
+function nextProject(){
+  const a=available();
+  if(a.length<2)return null;
+  return a[(current+1)%a.length];
+}
+function render(){
+  const p=currentProject(),n=nextProject(),card=$("#projectCard");
+  const activeColor=p?.color || "#3767f6";
+  document.documentElement.style.setProperty("--active-color",activeColor);
+  $("#archiveCount").textContent=archived.size;
+  if(!p){
+    card.style.background="#f4f5f7";card.style.color="#8d9099";
+    $("#projectTitle").textContent="Plus de projets";
+    $("#projectAuthor").textContent="";
+    $("#projectPitch").textContent="Remets un projet depuis les Archives ou ajoute une nouvelle idée.";
+    $("#projectStats").textContent="";$("#projectPos").textContent="";
+  }else{
+    card.style.background=p.color;card.style.color="#fff";
+    $("#projectTitle").textContent=p.title;
+    $("#projectAuthor").textContent="de "+p.author;
+    $("#projectPitch").textContent=p.pitch;
+    $("#projectStats").textContent=`${p.interest} intéressés · ${p.comments} commentaires`;
+    $("#projectPos").textContent=`${current+1}/${available().length}`;
+  }
+  $("#nextCard").style.background=n?n.color:"#eef0f4";
+  renderFollowing();
+  renderArchive();
+}
+function renderFollowing(){
+  const arr=projects.filter(p=>following.has(p.id)).sort((a,b)=>a.title.localeCompare(b.title,"fr"));
+  const count=arr.length;
+  $("#followCount").textContent=count;
+  $("#followLabel").textContent=count<=1 ? "projet suivi" : "projets suivis";
+  const box=$("#followList");
+  if(!arr.length){box.innerHTML='<div class="empty">Les projets qui t’intéressent viendront se ranger ici.</div>';return}
+  box.innerHTML=arr.map(p=>`<button class="follow-row" data-follow="${p.id}">
+    <span class="follow-color" style="background:${p.color}"></span>
+    <span class="follow-main"><strong>${p.title}</strong><small>de ${p.author} · ${p.interest} intéressés</small></span>
+    <span class="follow-open">›</span>
+  </button>`).join("");
+  $$("[data-follow]").forEach(b=>b.onclick=()=>openReader(projects.find(p=>p.id==b.dataset.follow)));
+}
+function renderArchive(){
+  const arr=projects.filter(p=>archived.has(p.id)).sort((a,b)=>a.title.localeCompare(b.title,"fr"));
+  $("#archiveList").innerHTML=arr.length?arr.map(p=>`<div class="archive-row">
+    <span><strong>${p.title}</strong><small>de ${p.author}</small></span>
+    <button class="restore" data-restore="${p.id}">Remettre</button>
+  </div>`).join(""):'<div class="empty">Aucun projet archivé.</div>';
+  $$("[data-restore]").forEach(b=>b.onclick=()=>{archived.delete(+b.dataset.restore);current=0;render();toast("Projet remis dans les cartes")});
+}
+function moveHorizontal(dir){
+  const a=available();if(a.length<2)return;
+  current=(current+dir+a.length)%a.length;render();
+}
+function archiveCurrent(){
+  const p=currentProject();if(!p)return;
+  archived.add(p.id);current=0;render();toast("Projet archivé");
+}
+function followCurrent(){
+  const p=currentProject();if(!p)return;
+  following.add(p.id);current=0;render();toast("Ajouté à À suivre");
+}
+function openReader(p=currentProject()){
+  if(!p)return;
+  $("#reader").style.background=p.color;
+  $("#readerTitle").textContent=p.title;$("#readerAuthor").textContent="de "+p.author;$("#readerText").textContent=p.pitch+" "+p.pitch;
+  $("#readerComment").style.color=p.color;
+  $("#readerComment").style.borderColor=p.color;
+  $("#readerBackdrop").classList.add("open");
+}
+
+const card=$("#projectCard");
+card.addEventListener("click",()=>{if(Math.abs(drag.dx)<8&&Math.abs(drag.dy)<8)openReader()});
+card.addEventListener("pointerdown",e=>{drag={active:true,x:e.clientX,y:e.clientY,dx:0,dy:0};card.setPointerCapture(e.pointerId);card.classList.add("dragging")});
+card.addEventListener("pointermove",e=>{
+  if(!drag.active)return;
+  drag.dx=e.clientX-drag.x;drag.dy=e.clientY-drag.y;
+  const vertical=Math.abs(drag.dy)>Math.abs(drag.dx);
+  card.style.transform=`translate3d(${drag.dx}px,${drag.dy}px,0) rotate(${drag.dx*.025}deg)`;
+  $("#cueUp").style.opacity=vertical&&drag.dy<0?Math.min(1,Math.abs(drag.dy)/80):0;
+  $("#cueDown").style.opacity=vertical&&drag.dy>0?Math.min(1,Math.abs(drag.dy)/80):0;
+});
+card.addEventListener("pointerup",()=>{
+  if(!drag.active)return;
+  const dx=drag.dx,dy=drag.dy;drag.active=false;card.classList.remove("dragging");card.style.transform="";
+  $("#cueUp").style.opacity=0;$("#cueDown").style.opacity=0;
+  if(Math.abs(dy)>Math.abs(dx)&&dy<-85)archiveCurrent();
+  else if(Math.abs(dy)>Math.abs(dx)&&dy>85)followCurrent();
+  else if(Math.abs(dx)>70)moveHorizontal(dx<0?1:-1);
+});
+card.addEventListener("pointercancel",()=>{drag.active=false;card.classList.remove("dragging");card.style.transform="";$("#cueUp").style.opacity=0;$("#cueDown").style.opacity=0});
+
+$("#readerBackdrop").onclick=e=>{if(e.target===$("#readerBackdrop"))$("#readerBackdrop").classList.remove("open")};
+$("#archiveBtn").onclick=()=>$("#archiveSheet").classList.add("open");
+$("#searchBtn").onclick=()=>{renderSearch("");$("#searchSheet").classList.add("open");setTimeout(()=>$("#searchInput").focus(),150)};
+$("#addBtn").onclick=()=>$("#addSheet").classList.add("open");
+$$("[data-close]").forEach(b=>b.onclick=()=>$("#"+b.dataset.close).classList.remove("open"));
+$$(".sheet-backdrop").forEach(b=>b.onclick=e=>{if(e.target===b)b.classList.remove("open")});
+
+function renderSearch(q){
+  q=(q||"").trim().toLowerCase();
+  const arr=projects.filter(p=>!q||[p.title,p.author,p.pitch].join(" ").toLowerCase().includes(q));
+  $("#searchResults").innerHTML=arr.map(p=>`<button class="result-row" data-search="${p.id}">
+    <span><strong>${p.title}</strong><small>de ${p.author}</small></span><span style="width:12px;height:38px;border-radius:999px;background:${p.color}"></span>
+  </button>`).join("")||'<div class="empty">Aucun résultat.</div>';
+  $$("[data-search]").forEach(b=>b.onclick=()=>{openReader(projects.find(p=>p.id==b.dataset.search));$("#searchSheet").classList.remove("open")});
+}
+$("#searchInput").oninput=e=>renderSearch(e.target.value);
+
+$("#colorChoices").innerHTML=palette.map((c,i)=>`<button class="color-choice ${i===0?"active":""}" style="background:${c}" data-color="${c}"></button>`).join("");
+$$("[data-color]").forEach(b=>b.onclick=()=>{$$("[data-color]").forEach(x=>x.classList.remove("active"));b.classList.add("active");chosenColor=b.dataset.color});
+
+$("#publishBtn").onclick=()=>{
+  const title=$("#newTitle").value.trim(),author=$("#newAuthor").value.trim(),pitch=$("#newPitch").value.trim();
+  if(!title||!author||!pitch){toast("Titre, porteur et présentation nécessaires");return}
+  projects.push({id:Date.now(),title,author,pitch,color:chosenColor,interest:0,comments:0});
+  $("#newTitle").value="";$("#newAuthor").value="";$("#newPitch").value="";
+  $("#addSheet").classList.remove("open");current=available().length-1;render();toast("Projet ajouté");
+};
+
+$("#brandBtn").onclick=()=>toast("1 tap : profil · 5 taps : administration");
+$("#readerComment").onclick=()=>toast("Espace commentaires");
+
+render();
+</script>
+</body>
+</html>
