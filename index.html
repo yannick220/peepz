@@ -458,6 +458,14 @@ button{cursor:pointer}
 }
 
 </style>
+
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icon-192.png" sizes="192x192">
+<link rel="apple-touch-icon" href="./icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="PEEPZ!">
+
 </head>
 <body>
 <div class="app">
@@ -700,5 +708,25 @@ $("#readerComment").onclick=()=>toast("Espace commentaires");
 
 render();
 </script>
+
+<script>
+if ("serviceWorker" in navigator && location.protocol === "https:") {
+  window.addEventListener("load", async () => {
+    try {
+      const reg = await navigator.serviceWorker.register("./sw.js", { updateViaCache: "none" });
+      await reg.update();
+      let refreshing = false;
+      navigator.serviceWorker.addEventListener("controllerchange", () => {
+        if (refreshing) return;
+        refreshing = true;
+        location.reload();
+      });
+    } catch (e) {
+      console.warn("Service worker non enregistré", e);
+    }
+  });
+}
+</script>
+
 </body>
 </html>
